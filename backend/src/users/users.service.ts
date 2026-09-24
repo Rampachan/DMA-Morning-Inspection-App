@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -84,13 +85,30 @@ export class UsersService {
 
     if (dto.name !== undefined) user.name = dto.name.trim();
     if (dto.mobile !== undefined) user.mobile = dto.mobile ? dto.mobile.trim() : null;
-    if (dto.role !== undefined) user.role = dto.role;
+    
+    if (dto.username !== undefined && dto.username.trim().toLowerCase() !== user.username) {
+      const trimmedUsername = dto.username.trim().toLowerCase();
+      const existing = await this.findByUsername(trimmedUsername);
+      if (existing && existing.user_id !== id) {
+        throw new ConflictException(`Username "${trimmedUsername}" is already taken.`);
+      }
+      user.username = trimmedUsername;
+    }
+
+    if (dto.role !== undefined) {
+      user.role = dto.role;
+      if (dto.role !== Role.COMMISSIONER) {
+        user.ulb_id = null;
+      }
+    }
 
     const activeVal = dto.active !== undefined ? dto.active : dto.isActive;
     if (activeVal !== undefined) user.active = activeVal;
 
     const ulbIdVal = dto.ulb_id !== undefined ? dto.ulb_id : dto.ulbId;
-    if (ulbIdVal !== undefined) user.ulb_id = ulbIdVal;
+    if (ulbIdVal !== undefined) {
+      user.ulb_id = ulbIdVal ? ulbIdVal : null;
+    }
 
     if (dto.password !== undefined && dto.password.trim().length > 0) {
       (user as User & { password_hash: string }).password_hash =

@@ -58,6 +58,7 @@ export async function createUser(dto: CreateUserDto): Promise<User> {
 export async function updateUser(id: string, dto: UpdateUserDto): Promise<User> {
   const payload: any = {};
   if (dto.name !== undefined) payload.name = dto.name.trim();
+  if (dto.username !== undefined) payload.username = dto.username.trim().toLowerCase();
   if (dto.mobile !== undefined) payload.mobile = dto.mobile.trim();
   if (dto.role !== undefined) payload.role = dto.role;
 

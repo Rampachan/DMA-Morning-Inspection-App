@@ -213,6 +213,7 @@ export interface CreateUserDto {
 
 export interface UpdateUserDto {
   name?: string;
+  username?: string;
   mobile?: string;
   isActive?: boolean;
   active?: boolean;

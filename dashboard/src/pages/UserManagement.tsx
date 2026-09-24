@@ -8,6 +8,7 @@ import {
   ChevronDown,
   X,
   Key,
+  Pencil,
   ShieldAlert,
   CheckCircle2,
 } from 'lucide-react';
@@ -60,6 +61,7 @@ export default function UserManagement() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -304,13 +306,24 @@ export default function UserManagement() {
                           </div>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <button
-                            onClick={() => setResetPasswordUser(user)}
-                            className="inline-flex items-center gap-1.5 text-xs text-gray-700 hover:text-blue-700 bg-white hover:bg-blue-50/50 border border-gray-200 hover:border-blue-300 rounded-lg px-2.5 py-1.5 font-medium transition-colors cursor-pointer"
-                          >
-                            <Key size={13} className="text-blue-600" />
-                            Reset Password
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="inline-flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-lg px-2.5 py-1.5 font-medium transition-colors cursor-pointer"
+                              title="Edit user details"
+                            >
+                              <Pencil size={13} className="text-blue-600" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setResetPasswordUser(user)}
+                              className="inline-flex items-center gap-1.5 text-xs text-gray-700 hover:text-blue-700 bg-white hover:bg-blue-50/50 border border-gray-200 hover:border-blue-300 rounded-lg px-2.5 py-1.5 font-medium transition-colors cursor-pointer"
+                              title="Reset user password"
+                            >
+                              <Key size={13} className="text-gray-500" />
+                              Password
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -339,6 +352,24 @@ export default function UserManagement() {
             setNotification({
               type: 'success',
               message: `User "${newUser.name}" (@${newUser.username}) created successfully!`,
+            });
+            setTimeout(() => setNotification(null), 5000);
+          }}
+        />
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          ulbs={ulbs}
+          onClose={() => setEditingUser(null)}
+          onUpdated={(updatedUser) => {
+            void qc.invalidateQueries({ queryKey: ['users'] });
+            setEditingUser(null);
+            setNotification({
+              type: 'success',
+              message: `User "${updatedUser.name}" (@${updatedUser.username}) was updated successfully!`,
             });
             setTimeout(() => setNotification(null), 5000);
           }}
@@ -520,6 +551,212 @@ function CreateUserModal({ ulbs, onClose, onCreated }: CreateUserModalProps) {
               <Loader2 size={14} className="animate-spin mr-1.5" />
             )}
             Create User
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// EditUserModal
+// ─────────────────────────────────────────────────────────────
+interface EditUserModalProps {
+  user: User;
+  ulbs: Ulb[];
+  onClose: () => void;
+  onUpdated: (user: User) => void;
+}
+
+function EditUserModal({ user, ulbs, onClose, onUpdated }: EditUserModalProps) {
+  const userId = user.id || user.user_id;
+  const initialUlbId =
+    user.ulbId ||
+    user.ulb_id ||
+    (user.ulb ? user.ulb.id || (user.ulb as any).ulb_id : '');
+
+  const [form, setForm] = useState({
+    name: user.name || '',
+    username: user.username || '',
+    role: user.role || ('commissioner' as UserRole),
+    mobile: user.mobile || '',
+    ulbId: initialUlbId || '',
+    isActive:
+      user.isActive !== undefined ? user.isActive : (user.active ?? true),
+    newPassword: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: (dto: UpdateUserDto) => updateUser(userId!, dto),
+    onSuccess: onUpdated,
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.message ||
+        'Failed to update user. Please verify the form and try again.';
+      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    },
+  });
+
+  const set = (patch: Partial<typeof form>) =>
+    setForm((f) => ({ ...f, ...patch }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!form.name.trim() || !form.username.trim()) {
+      setError('Full Name and Username are required.');
+      return;
+    }
+    if (
+      form.role === 'commissioner' &&
+      (!form.ulbId || form.ulbId.trim() === '')
+    ) {
+      setError('Please select an Urban Local Body (ULB) for the Commissioner.');
+      return;
+    }
+    if (form.newPassword && form.newPassword.length < 6) {
+      setError('New password must be at least 6 characters.');
+      return;
+    }
+
+    const dto: UpdateUserDto = {
+      name: form.name.trim(),
+      username: form.username.trim().toLowerCase(),
+      role: form.role,
+      mobile: form.mobile ? form.mobile.trim() : undefined,
+      ulbId: form.role === 'commissioner' ? form.ulbId : undefined,
+      ulb_id: form.role === 'commissioner' ? form.ulbId : undefined,
+      isActive: form.isActive,
+      active: form.isActive,
+      password:
+        form.newPassword.trim().length > 0 ? form.newPassword : undefined,
+    };
+
+    mutation.mutate(dto);
+  };
+
+  return (
+    <Modal title={`Edit User — ${user.name}`} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Full Name *">
+          <input
+            type="text"
+            required
+            placeholder="Enter full name"
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="Username *">
+          <input
+            type="text"
+            required
+            placeholder="Enter username"
+            value={form.username}
+            onChange={(e) => set({ username: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="Role *">
+          <select
+            value={form.role}
+            onChange={(e) => set({ role: e.target.value as UserRole })}
+            className={inputCls}
+          >
+            <option value="commissioner">Commissioner (ULB In-charge)</option>
+            <option value="director">Director (State Monitor)</option>
+            <option value="admin">System Administrator</option>
+          </select>
+        </Field>
+
+        {form.role === 'commissioner' && (
+          <Field label="Assigned ULB / Corporation *">
+            <select
+              value={form.ulbId || ''}
+              onChange={(e) => set({ ulbId: e.target.value })}
+              required
+              className={inputCls}
+            >
+              <option value="">Select Municipality or Corporation…</option>
+              {ulbs.map((u) => {
+                const uId = u.id || (u as any).ulb_id;
+                return (
+                  <option key={uId} value={uId}>
+                    {u.name} ({u.type === 'corporation' ? 'Corp' : 'Muni'} - {u.district})
+                  </option>
+                );
+              })}
+            </select>
+          </Field>
+        )}
+
+        <Field label="Mobile Number">
+          <input
+            type="tel"
+            placeholder="10-digit mobile number"
+            value={form.mobile || ''}
+            onChange={(e) => set({ mobile: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
+
+        <Field label="New Password (optional)">
+          <input
+            type="password"
+            placeholder="Leave blank to keep current password"
+            minLength={6}
+            value={form.newPassword}
+            onChange={(e) => set({ newPassword: e.target.value })}
+            className={inputCls}
+          />
+        </Field>
+
+        <div className="flex items-center gap-3 pt-1">
+          <label className="text-xs font-semibold text-gray-700">Account Status:</label>
+          <button
+            type="button"
+            onClick={() => set({ isActive: !form.isActive })}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+              form.isActive ? 'bg-emerald-600' : 'bg-gray-300'
+            }`}
+            role="switch"
+            aria-checked={form.isActive}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform ${
+                form.isActive ? 'translate-x-4.5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-semibold ${form.isActive ? 'text-emerald-700' : 'text-gray-400'}`}>
+            {form.isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+
+        {error && (
+          <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
+          <button type="button" onClick={onClose} className={cancelBtnCls}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={mutation.isPending}
+            className={submitBtnCls}
+          >
+            {mutation.isPending && (
+              <Loader2 size={14} className="animate-spin mr-1.5" />
+            )}
+            Save Changes
           </button>
         </div>
       </form>
