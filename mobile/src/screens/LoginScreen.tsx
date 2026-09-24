@@ -20,6 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +76,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             <TextInput
               style={styles.input}
               placeholder="Enter your username"
+              placeholderTextColor="#9ca3af"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -85,17 +87,27 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             />
 
             <Text style={styles.fieldLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!loading}
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
-              accessibilityLabel="Password input"
-            />
+            <View style={styles.passwordWrapper}>
+              <TextInput
+                style={[styles.input, styles.passwordInput]}
+                placeholder="Enter your password"
+                placeholderTextColor="#9ca3af"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+                accessibilityLabel="Password input"
+              />
+              <TouchableOpacity
+                style={styles.eyeBtn}
+                onPress={() => setShowPassword((prev) => !prev)}
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
@@ -150,6 +162,27 @@ const styles = StyleSheet.create({
     color: '#111',
     marginBottom: 16,
     backgroundColor: '#fafafa',
+  },
+  passwordWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  passwordInput: {
+    marginBottom: 0,
+    paddingRight: 64,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 12,
+    top: 13,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  eyeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1565c0',
   },
   loginBtn: { backgroundColor: '#1565c0', borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
   loginBtnDisabled: { backgroundColor: '#90caf9' },

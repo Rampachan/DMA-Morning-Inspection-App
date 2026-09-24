@@ -6,3 +6,14 @@
 * {
   box-sizing: border-box;
 }
+
+/* Hide browser default password reveal and clear buttons (Edge / IE / Chromium) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
