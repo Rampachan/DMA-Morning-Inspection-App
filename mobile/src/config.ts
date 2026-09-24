@@ -12,7 +12,7 @@ const envBaseUrl: string | undefined =
     : undefined;
 
 /** Root URL of the NestJS backend – no trailing slash. */
-export const BASE_URL: string = envBaseUrl ?? 'http://192.168.31.29:3000';
+export const BASE_URL: string = envBaseUrl ?? 'https://dma-morning-inspection-app.onrender.com';
 
 /** Full versioned API prefix. */
 export const API_BASE: string = `${BASE_URL}/api/v1`;
