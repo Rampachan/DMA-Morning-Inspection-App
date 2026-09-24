@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Building2,
+  Smartphone,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -97,6 +98,18 @@ export default function Layout({ children }: LayoutProps) {
           </NavLink>
         ))}
       </nav>
+
+      {/* Download APK Link */}
+      <div className="px-3 pb-3">
+        <a
+          href="/app-debug.apk"
+          download="app-debug.apk"
+          className="flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-emerald-200 bg-emerald-900/50 hover:bg-emerald-800/70 border border-emerald-500/40 rounded-lg transition-colors"
+        >
+          <Smartphone size={16} className="text-emerald-400 flex-shrink-0" />
+          <span className="truncate">Download Android App</span>
+        </a>
+      </div>
 
       {/* User */}
       <div className="px-4 py-4 border-t border-blue-700">

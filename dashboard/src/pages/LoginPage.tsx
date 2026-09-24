@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Building2, Eye, EyeOff, Loader2, Smartphone } from 'lucide-react';
 import { login } from '../api/auth';
 
 export default function LoginPage() {
@@ -123,6 +123,20 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+
+          {/* Mobile App Download Card */}
+          <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center">
+            <span className="text-xs font-medium text-gray-500 mb-2">Field Officer Mobile App</span>
+            <a
+              href="/app-debug.apk"
+              download="app-debug.apk"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              <Smartphone size={16} />
+              Download Android App (.apk)
+            </a>
+            <span className="text-[11px] text-gray-400 mt-1">47.6 MB • Direct Android Installer</span>
+          </div>
 
           <p className="mt-6 text-center text-xs text-gray-400">
             MCRS v1.0 — For authorised officers only
