@@ -128,12 +128,12 @@ export default function LoginPage() {
           <div className="mt-6 pt-5 border-t border-gray-100 flex flex-col items-center">
             <span className="text-xs font-medium text-gray-500 mb-2">Field Officer Mobile App</span>
             <a
-              href="/app-debug.apk"
-              download="app-debug.apk"
+              href="/MICS.apk"
+              download="MICS.apk"
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
             >
               <Smartphone size={16} />
-              Download Android App (.apk)
+              Download MICS App (.apk)
             </a>
             <span className="text-[11px] text-gray-400 mt-1">47.6 MB • Direct Android Installer</span>
           </div>

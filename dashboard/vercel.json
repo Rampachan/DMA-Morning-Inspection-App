@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/app-debug.apk",
+      "source": "/(MICS\\.apk|app-debug\\.apk)",
       "headers": [
         {
           "key": "Content-Type",
@@ -9,14 +9,14 @@
         },
         {
           "key": "Content-Disposition",
-          "value": "attachment; filename=\"app-debug.apk\""
+          "value": "attachment; filename=\"MICS.apk\""
         }
       ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!app-debug\\.apk|assets/).*)",
+      "source": "/((?!MICS\\.apk|app-debug\\.apk|assets/).*)",
       "destination": "/index.html"
     }
   ]

@@ -102,12 +102,12 @@ export default function Layout({ children }: LayoutProps) {
       {/* Download APK Link */}
       <div className="px-3 pb-3">
         <a
-          href="/app-debug.apk"
-          download="app-debug.apk"
+          href="/MICS.apk"
+          download="MICS.apk"
           className="flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-emerald-200 bg-emerald-900/50 hover:bg-emerald-800/70 border border-emerald-500/40 rounded-lg transition-colors"
         >
           <Smartphone size={16} className="text-emerald-400 flex-shrink-0" />
-          <span className="truncate">Download Android App</span>
+          <span className="truncate">Download MICS App</span>
         </a>
       </div>
 
