@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@common/*": ["src/common/*"],
+      "@database/*": ["src/database/*"],
+      "@auth/*": ["src/auth/*"],
+      "@users/*": ["src/users/*"],
+      "@ulb/*": ["src/ulb/*"],
+      "@geo/*": ["src/geo/*"],
+      "@photo/*": ["src/photo/*"],
+      "@submission/*": ["src/submission/*"],
+      "@notifications/*": ["src/notifications/*"],
+      "@tasks/*": ["src/tasks/*"],
+      "@reports/*": ["src/reports/*"],
+      "@audit-log/*": ["src/audit-log/*"],
+      "@inspection-category/*": ["src/inspection-category/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
