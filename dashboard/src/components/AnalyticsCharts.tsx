@@ -56,7 +56,7 @@ export default function AnalyticsCharts({
               </span>
             </div>
             <p className="text-xs text-gray-500 mb-4">
-              Visual proportion of 169 ULBs (24 Corps + 145 Regional Municipalities)
+              Visual proportion of 170 ULBs (24 Corps + 146 Regional Municipalities)
             </p>
 
             {/* Stacked Progress Bar */}

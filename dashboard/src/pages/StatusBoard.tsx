@@ -711,7 +711,7 @@ export default function StatusBoard() {
                 }`}
               >
                 <Layers size={15} />
-                <span>All 169 ULBs</span>
+                <span>All 170 ULBs</span>
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                     filters.type === 'all' && !filters.region
@@ -719,7 +719,7 @@ export default function StatusBoard() {
                       : 'bg-gray-200 text-gray-700'
                   }`}
                 >
-                  169
+                  170
                 </span>
               </button>
 
@@ -768,7 +768,7 @@ export default function StatusBoard() {
                       : 'bg-sky-100 text-sky-800'
                   }`}
                 >
-                  145
+                  146
                 </span>
               </button>
             </div>
@@ -794,12 +794,12 @@ export default function StatusBoard() {
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
-                All 7 Regions (145)
+                All 7 Regions (146)
               </button>
               {[
                 { name: 'Chengalpattu', count: 20 },
                 { name: 'Vellore', count: 22 },
-                { name: 'Salem', count: 17 },
+                { name: 'Salem', count: 18 },
                 { name: 'Thanjavur', count: 21 },
                 { name: 'Madurai', count: 19 },
                 { name: 'Tiruppur', count: 24 },
@@ -830,7 +830,7 @@ export default function StatusBoard() {
                   : filters.type === 'corporation'
                   ? '24 Statewide Corporations'
                   : filters.type === 'municipality'
-                  ? '145 Regional Municipalities'
+                  ? '146 Regional Municipalities'
                   : 'Live Compliance Status Table'}
               </span>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
@@ -842,7 +842,7 @@ export default function StatusBoard() {
                 onClick={() => handleSelectRegion(null)}
                 className="text-xs text-sky-600 hover:text-sky-800 font-semibold underline"
               >
-                Show all 169 ULBs
+                Show all 170 ULBs
               </button>
             )}
           </div>
