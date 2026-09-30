@@ -82,4 +82,26 @@ export class ReportsController {
 
     res.end(buffer);
   }
+
+  /**
+   * GET /api/v1/reports/qa-audit-pdf
+   * Streams the 21-domain QA Audit Report PDF file.
+   */
+  @Get('qa-audit-pdf')
+  async getQaAuditPdf(@Res() res: Response) {
+    const fs = require('fs');
+    const path = require('path');
+    const pdfPath = path.resolve(__dirname, '../../MCRS_Comprehensive_QA_Test_Report.pdf');
+    if (fs.existsSync(pdfPath)) {
+      const buffer = fs.readFileSync(pdfPath);
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="MCRS_Comprehensive_QA_Test_Report.pdf"',
+        'Content-Length': buffer.length,
+      });
+      res.end(buffer);
+    } else {
+      res.status(404).json({ message: 'QA Audit PDF not found' });
+    }
+  }
 }

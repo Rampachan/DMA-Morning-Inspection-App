@@ -204,6 +204,31 @@ export default function ReportsPage() {
           </div>
           {monthlyToast && <Toast toast={monthlyToast} />}
         </div>
+
+        {/* QA Audit Test Report (PDF) */}
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200 shadow-sm space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h2 className="text-base font-black text-emerald-950 flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-700" />
+                Comprehensive 21-Domain QA Audit Test Report (PDF)
+              </h2>
+              <p className="text-xs text-emerald-800 mt-1 max-w-xl">
+                Official 21-domain system quality audit report covering Functional, Integration, Security, VAPT, Performance, Accessibility, and ULB hierarchy verification.
+              </p>
+            </div>
+            <a
+              href="/MCRS_Comprehensive_QA_Test_Report.pdf"
+              download="MCRS_Comprehensive_QA_Test_Report.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold rounded-xl transition-colors shadow-md"
+            >
+              <Download size={16} />
+              Download QA Test Audit PDF
+            </a>
+          </div>
+        </div>
       </div>
     </Layout>
   );
