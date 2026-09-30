@@ -32,12 +32,12 @@ interface CategoryRow {
 
 const OFFICIAL_REGIONS = [
   'Chengalpattu',
+  'Madurai',
+  'Thanjavur',
+  'Tirunelveli',
+  'Tiruppur',
   'Vellore',
   'Salem',
-  'Thanjavur',
-  'Madurai',
-  'Tiruppur',
-  'Tirunelveli',
 ];
 
 const STATUS_FILL: Record<string, ExcelJS.Fill> = {
@@ -134,10 +134,9 @@ export class ReportsService {
         catStatuses.every((s) => s === SubmissionStatus.ABSENT);
       const hasUploaded = hasOnTime || hasLate;
 
-      let uploadStatus = 'Not Uploaded (Pending)';
+      let uploadStatus = 'Not Uploaded';
       if (hasLate) uploadStatus = 'Uploaded (Late)';
       else if (hasOnTime) uploadStatus = 'Uploaded (On-Time)';
-      else if (hasAbsent) uploadStatus = 'Not Uploaded (Absent)';
 
       let latestTime: string | null = null;
       for (const item of catMap.values()) {
@@ -174,151 +173,169 @@ export class ReportsService {
     const corporations = ulbs.filter((u) => u.type === 'corporation');
     const municipalities = ulbs.filter((u) => u.type === 'municipality');
 
+    const thinBorder: Partial<ExcelJS.Borders> = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } },
+    };
+
+    // Format date string YYYY-MM-DD -> DD.MM.YYYY
+    const dateParts = date.split('-');
+    const formattedDate =
+      dateParts.length === 3
+        ? `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`
+        : date;
+
     // ──────────────────────────────────────────────────────────────────────────
-    // SHEET 1: Executive Summary
+    // SHEET 1: Region Abstract (EXACT MATCH TO USER REFERENCE PDF)
     // ──────────────────────────────────────────────────────────────────────────
-    const wsSummary = wb.addWorksheet('Executive Summary');
-    wsSummary.views = [{ showGridLines: true }];
+    const wsAbstract = wb.addWorksheet('Region Abstract');
+    wsAbstract.views = [{ showGridLines: true }];
 
-    // Title
-    const titleRow = wsSummary.addRow([
-      'TAMIL NADU DIRECTORATE OF MUNICIPAL ADMINISTRATION (DMA)',
-    ]);
-    titleRow.font = { bold: true, size: 14, color: { argb: 'FF1F4E79' } };
-    wsSummary.mergeCells('A1:I1');
+    // Row 1: Merged Title
+    wsAbstract.mergeCells('A1:F1');
+    const titleCell = wsAbstract.getCell('A1');
+    titleCell.value =
+      'Region Abstract - Municipal Commissioners Morning Inspection Status';
+    titleCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFCC0000' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    wsAbstract.getRow(1).height = 28;
 
-    const subTitleRow = wsSummary.addRow([
-      `DAILY COMPLIANCE EXECUTIVE SUMMARY — DATE: ${date}`,
-    ]);
-    subTitleRow.font = { bold: true, size: 11, color: { argb: 'FF555555' } };
-    wsSummary.mergeCells('A2:I2');
-    wsSummary.addRow([]); // Blank spacer
+    // Row 2: Date & Time of Verification info
+    const row2 = wsAbstract.getRow(2);
+    row2.height = 24;
 
-    // Overall metrics calculation
-    const allStats = ulbs.map(getUlbStats);
-    const totalUlbs = ulbs.length;
-    const totalUploaded = allStats.filter((s) => s.hasUploaded).length;
-    const totalOnTime = allStats.filter((s) => s.uploadStatus.includes('On-Time')).length;
-    const totalLate = allStats.filter((s) => s.uploadStatus.includes('Late')).length;
-    const totalNotUploaded = totalUlbs - totalUploaded;
-    const overallCompliance = totalUlbs > 0 ? Math.round((totalUploaded / totalUlbs) * 100) : 0;
+    const cellA2 = wsAbstract.getCell('A2');
+    cellA2.value = 'Date';
+    cellA2.font = { name: 'Arial', size: 11, bold: true };
+    cellA2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    const corpStats = corporations.map(getUlbStats);
-    const corpUploaded = corpStats.filter((s) => s.hasUploaded).length;
-    const corpNotUploaded = corporations.length - corpUploaded;
-    const corpCompliance =
-      corporations.length > 0 ? Math.round((corpUploaded / corporations.length) * 100) : 0;
+    const cellB2 = wsAbstract.getCell('B2');
+    cellB2.value = formattedDate;
+    cellB2.font = { name: 'Arial', size: 11, bold: true };
+    cellB2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Overall Table
-    const sec1 = wsSummary.addRow(['1. STATEWIDE COMPLIANCE KPI OVERVIEW']);
-    sec1.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    sec1.fill = HEADER_FILL;
-    wsSummary.mergeCells(`A${sec1.number}:D${sec1.number}`);
+    wsAbstract.mergeCells('C2:D2');
+    const cellC2 = wsAbstract.getCell('C2');
+    cellC2.value = 'Time of Verification';
+    cellC2.font = { name: 'Arial', size: 11, bold: true };
+    cellC2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    wsSummary.addRow(['Metric', 'Count', 'Total Scope', 'Compliance Rate %']);
-    const kpiHeader = wsSummary.getRow(wsSummary.rowCount);
-    kpiHeader.font = { bold: true };
-    kpiHeader.fill = SECTION_FILL;
+    wsAbstract.mergeCells('E2:F2');
+    const cellE2 = wsAbstract.getCell('E2');
+    cellE2.value = '5.45 Am to 7.30 Am';
+    cellE2.font = { name: 'Arial', size: 11, bold: true };
+    cellE2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    wsSummary.addRow(['Total ULBs (Statewide)', totalUlbs, totalUlbs, '100%']);
-    wsSummary.addRow(['24 Corporations', corpUploaded, corporations.length, `${corpCompliance}%`]);
-    wsSummary.addRow([
-      'Municipalities (7 Regions)',
-      totalUploaded - corpUploaded,
-      municipalities.length,
-      `${municipalities.length > 0 ? Math.round(((totalUploaded - corpUploaded) / municipalities.length) * 100) : 0}%`,
-    ]);
-    wsSummary.addRow(['Total Uploaded Today', totalUploaded, totalUlbs, `${overallCompliance}%`]);
-    wsSummary.addRow(['Uploaded On-Time (05:00–07:30)', totalOnTime, totalUlbs, `${Math.round((totalOnTime / totalUlbs) * 100)}%`]);
-    wsSummary.addRow(['Uploaded Late (After 07:30)', totalLate, totalUlbs, `${Math.round((totalLate / totalUlbs) * 100)}%`]);
-    wsSummary.addRow(['Not Uploaded (Pending/Absent)', totalNotUploaded, totalUlbs, `${Math.round((totalNotUploaded / totalUlbs) * 100)}%`]);
-    wsSummary.addRow([]);
-
-    // 7 Regions Breakdown Table
-    const sec2 = wsSummary.addRow(['2. 7 REGIONS MUNICIPALITIES COMPARATIVE PERFORMANCE']);
-    sec2.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    sec2.fill = HEADER_FILL;
-    wsSummary.mergeCells(`A${sec2.number}:I${sec2.number}`);
-
-    wsSummary.addRow([
+    // Row 3: Headers
+    const headers = [
       'S.No',
-      'Region Name',
-      'Total Municipalities',
-      'Uploaded (Submitted)',
-      'Not Uploaded',
-      'On-Time',
-      'Late',
-      'Pending/Absent',
-      'Compliance %',
-    ]);
-    const regHeader = wsSummary.getRow(wsSummary.rowCount);
-    regHeader.font = { bold: true };
-    regHeader.fill = SECTION_FILL;
+      'Region',
+      'No of\nULBs',
+      'No of ULBs\nuploaded\nthe photos',
+      'No of ULBs\nnot uploaded\nthe photos',
+      'Not Uploaded ULBs',
+    ];
+    const headerRow = wsAbstract.addRow(headers);
+    headerRow.height = 40;
+    headerRow.eachCell((cell) => {
+      cell.font = { name: 'Arial', size: 10, bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
 
-    let sNo = 1;
-    let sumTotal = 0;
-    let sumUploaded = 0;
-    let sumNotUploaded = 0;
-    let sumOnTime = 0;
-    let sumLate = 0;
-    let sumPending = 0;
+    // Rows 4 - 10: Regions Data
+    let totalUlbsCount = 0;
+    let totalUploadedCount = 0;
+    let totalNotUploadedCount = 0;
+    let rIdx = 1;
 
     for (const regionName of OFFICIAL_REGIONS) {
-      const regionMunis = municipalities.filter((m) => m.region === regionName);
-      const regionStats = regionMunis.map(getUlbStats);
-      const rTotal = regionMunis.length;
-      const rUploaded = regionStats.filter((s) => s.hasUploaded).length;
-      const rNotUploaded = rTotal - rUploaded;
-      const rOnTime = regionStats.filter((s) => s.uploadStatus.includes('On-Time')).length;
-      const rLate = regionStats.filter((s) => s.uploadStatus.includes('Late')).length;
-      const rPending = rNotUploaded;
-      const rCompliance = rTotal > 0 ? Math.round((rUploaded / rTotal) * 100) : 0;
+      const regionMunis = municipalities
+        .filter((m) => m.region === regionName)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-      sumTotal += rTotal;
-      sumUploaded += rUploaded;
-      sumNotUploaded += rNotUploaded;
-      sumOnTime += rOnTime;
-      sumLate += rLate;
-      sumPending += rPending;
+      const totalCount = regionMunis.length;
+      const uploadedMunis = regionMunis.filter((m) => getUlbStats(m).hasUploaded);
+      const notUploadedMunis = regionMunis.filter((m) => !getUlbStats(m).hasUploaded);
 
-      wsSummary.addRow([
-        sNo++,
-        regionName,
-        rTotal,
-        rUploaded,
-        rNotUploaded,
-        rOnTime,
-        rLate,
-        rPending,
-        `${rCompliance}%`,
+      const uploadedCount = uploadedMunis.length;
+      const notUploadedCount = notUploadedMunis.length;
+
+      totalUlbsCount += totalCount;
+      totalUploadedCount += uploadedCount;
+      totalNotUploadedCount += notUploadedCount;
+
+      const notUploadedText =
+        notUploadedMunis.length === 0
+          ? '-'
+          : notUploadedMunis
+              .map((m, i) => `${i + 1}.${m.name}`)
+              .join('\n');
+
+      const dataRow = wsAbstract.addRow([
+        rIdx++,
+        `${regionName} Region`,
+        totalCount,
+        uploadedCount,
+        notUploadedCount,
+        notUploadedText,
       ]);
+
+      const lineCount = notUploadedMunis.length > 0 ? notUploadedMunis.length : 1;
+      dataRow.height = Math.max(24, lineCount * 18 + 8);
+
+      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+
+      dataRow.eachCell((cell) => {
+        cell.font = { name: 'Arial', size: 10 };
+      });
     }
 
-    // Totals row
-    const regTotalRow = wsSummary.addRow([
+    // Row 11: Total Row
+    const totalRow = wsAbstract.addRow([
       '',
-      'TOTAL MUNICIPALITIES',
-      sumTotal,
-      sumUploaded,
-      sumNotUploaded,
-      sumOnTime,
-      sumLate,
-      sumPending,
-      `${sumTotal > 0 ? Math.round((sumUploaded / sumTotal) * 100) : 0}%`,
+      'Total',
+      totalUlbsCount,
+      totalUploadedCount,
+      totalNotUploadedCount,
+      '',
     ]);
-    regTotalRow.font = { bold: true };
-    regTotalRow.fill = SECTION_FILL;
+    totalRow.height = 26;
 
-    wsSummary.columns = [
-      { width: 8 },
-      { width: 28 },
-      { width: 22 },
-      { width: 22 },
-      { width: 16 },
-      { width: 14 },
-      { width: 14 },
-      { width: 18 },
-      { width: 16 },
+    const totalFill: ExcelJS.Fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF2DCDB' },
+    };
+
+    totalRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cell.fill = totalFill;
+      cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFCC0000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Apply borders to all cells A1:F11
+    for (let r = 1; r <= wsAbstract.rowCount; r++) {
+      const row = wsAbstract.getRow(r);
+      for (let c = 1; c <= 6; c++) {
+        const cell = row.getCell(c);
+        cell.border = thinBorder;
+      }
+    }
+
+    wsAbstract.columns = [
+      { width: 8 },  // S.No
+      { width: 24 }, // Region
+      { width: 12 }, // No of ULBs
+      { width: 18 }, // No of ULBs uploaded the photos
+      { width: 18 }, // No of ULBs not uploaded the photos
+      { width: 36 }, // Not Uploaded ULBs
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -328,7 +345,7 @@ export class ReportsService {
     wsCorp.views = [{ showGridLines: true }];
 
     const corpTitle = wsCorp.addRow([
-      `24 CORPORATIONS — DAILY COMPLIANCE STATUS (${date})`,
+      `24 CORPORATIONS — DAILY COMPLIANCE STATUS (${formattedDate})`,
     ]);
     corpTitle.font = { bold: true, size: 13, color: { argb: 'FF1F4E79' } };
     wsCorp.mergeCells(`A1:${String.fromCharCode(65 + 5 + categories.length)}1`);
@@ -373,12 +390,10 @@ export class ReportsService {
       wsCorp.addRow(rowValues);
       const row = wsCorp.getRow(wsCorp.rowCount);
 
-      // Uploaded? column fill
       const uploadedCell = row.getCell(5);
       uploadedCell.fill = stats.hasUploaded ? YES_FILL : NO_FILL;
       uploadedCell.font = { bold: true };
 
-      // Category column fills
       categories.forEach((c, i) => {
         const s = stats.catMap.get(c.category_id)?.status;
         if (s && STATUS_FILL[s]) {
@@ -394,13 +409,13 @@ export class ReportsService {
     wsCorp.getColumn(2).width = 24;
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SHEET 3: Regional Municipalities
+    // SHEET 3: Detailed Municipality Status
     // ──────────────────────────────────────────────────────────────────────────
-    const wsMuni = wb.addWorksheet('Regional Municipalities');
+    const wsMuni = wb.addWorksheet('Detailed Municipality Status');
     wsMuni.views = [{ showGridLines: true }];
 
     const muniTitle = wsMuni.addRow([
-      `7 REGIONS MUNICIPALITIES — UPLOAD STATUS BY REGION (${date})`,
+      `7 REGIONS MUNICIPALITIES — DETAILED STATUS (${formattedDate})`,
     ]);
     muniTitle.font = { bold: true, size: 13, color: { argb: 'FF1F4E79' } };
     wsMuni.mergeCells(`A1:${String.fromCharCode(65 + 6 + categories.length)}1`);
@@ -428,7 +443,6 @@ export class ReportsService {
       const rStats = regionMunis.map(getUlbStats);
       const rUploaded = rStats.filter((s) => s.hasUploaded).length;
 
-      // Group section banner
       const groupBanner = wsMuni.addRow([
         `REGION: ${regionName.toUpperCase()} — ${regionMunis.length} Municipalities (${rUploaded} Uploaded, ${regionMunis.length - rUploaded} Not Uploaded)`,
       ]);
@@ -438,7 +452,6 @@ export class ReportsService {
         `A${groupBanner.number}:${String.fromCharCode(65 + 6 + categories.length)}${groupBanner.number}`,
       );
 
-      let regMuniIdx = 1;
       for (const muni of regionMunis) {
         const stats = getUlbStats(muni);
         const catCells = categories.map((c) => {
@@ -461,12 +474,10 @@ export class ReportsService {
         ]);
         const row = wsMuni.getRow(wsMuni.rowCount);
 
-        // Uploaded? column fill
         const uploadedCell = row.getCell(5);
         uploadedCell.fill = stats.hasUploaded ? YES_FILL : NO_FILL;
         uploadedCell.font = { bold: true };
 
-        // Category column fills
         categories.forEach((c, i) => {
           const s = stats.catMap.get(c.category_id)?.status;
           if (s && STATUS_FILL[s]) {
@@ -474,7 +485,7 @@ export class ReportsService {
           }
         });
       }
-      wsMuni.addRow([]); // Spacer between regions
+      wsMuni.addRow([]);
     }
 
     wsMuni.columns.forEach((col) => {
