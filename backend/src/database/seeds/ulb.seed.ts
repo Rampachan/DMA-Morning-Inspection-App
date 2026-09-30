@@ -114,6 +114,43 @@ export async function runSeed(dataSource: DataSource): Promise<void> {
     `[ULB Seed] Processed ${totalMuniCount} Municipalities across ${data.regions.length} Regions (${muniInserted} newly created).`,
   );
 
+  // 5.5 Remove any extra ULB records in DB that are NOT part of the official 170 list
+  const validNames = new Set<string>();
+  for (const c of data.corporations) {
+    validNames.add(c.name.trim());
+  }
+  for (const r of data.regions) {
+    for (const m of r.municipalities) {
+      validNames.add(m.trim().replace(/[,\.]$/, '').trim());
+    }
+  }
+
+  const allDbUlbs = await ulbRepo.find();
+  const invalidUlbs = allDbUlbs.filter((u) => !validNames.has(u.name.trim()));
+  if (invalidUlbs.length > 0) {
+    console.log(`[ULB Seed] Found ${invalidUlbs.length} stale ULBs in database. Cleaning up...`);
+    for (const invalid of invalidUlbs) {
+      const invalidId = invalid.ulb_id;
+      await dataSource.query(
+        `UPDATE "users" SET "ulb_id" = NULL WHERE "ulb_id" = $1;`,
+        [invalidId],
+      );
+      await dataSource.query(
+        `DELETE FROM "photo" WHERE "submission_id" IN (SELECT "submission_id" FROM "submission" WHERE "ulb_id" = $1);`,
+        [invalidId],
+      );
+      await dataSource.query(
+        `DELETE FROM "submission" WHERE "ulb_id" = $1;`,
+        [invalidId],
+      );
+      await dataSource.query(
+        `DELETE FROM "ulb" WHERE "ulb_id" = $1;`,
+        [invalidId],
+      );
+    }
+    console.log(`[ULB Seed] Removed ${invalidUlbs.length} stale ULB records.`);
+  }
+
   // 6. Seed Inspection Categories
   const catCount = await catRepo.count();
   if (catCount === 0) {

@@ -14,6 +14,7 @@
     "seed": "ts-node src/database/seeds/ulb.seed.ts",
     "setup-db": "ts-node src/database/setup-db.ts",
     "check-auth": "ts-node src/database/check-auth.ts",
+    "check-ulb": "ts-node src/database/check-ulb-count.ts",
     "test-submit": "ts-node src/submission/test-submit.ts",
     "parse-ulb": "ts-node src/database/seeds/parse-excel-to-json.ts",
     "analyze-structure": "ts-node src/database/seeds/analyze-structure.ts"
