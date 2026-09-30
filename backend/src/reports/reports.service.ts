@@ -379,14 +379,14 @@ export class ReportsService {
     corpCellE2.font = { name: 'Arial', size: 11, bold: true };
     corpCellE2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Row 3: Headers
+    // Row 3: Headers (EXACT MATCH TO MUNICIPALITIES PDF REFERENCE)
     const corpHeaders = [
       'S.No',
-      'Corporation Name',
-      'No of\nCategories',
-      'No of Categories\nuploaded\nthe photos',
-      'No of Categories\nnot uploaded\nthe photos',
-      'Not Uploaded Categories',
+      'Corporation',
+      'No of\nULBs',
+      'No of ULBs\nuploaded\nthe photos',
+      'No of ULBs\nnot uploaded\nthe photos',
+      'Not Uploaded ULBs',
     ];
     const corpHeaderRow = wsCorpAbstract.addRow(corpHeaders);
     corpHeaderRow.height = 40;
@@ -395,73 +395,89 @@ export class ReportsService {
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     });
 
-    // Rows 4 - 27: 24 Corporations Data
-    let totalCorpCategoriesCount = 0;
-    let totalCorpUploadedCatCount = 0;
-    let totalCorpNotUploadedCatCount = 0;
-    let cIdx = 1;
-
     const sortedCorporations = [...corporations].sort((a, b) =>
       a.name.localeCompare(b.name),
     );
 
+    const uploadedCorporations = sortedCorporations.filter(
+      (c) => getUlbStats(c).hasUploaded,
+    );
+    const notUploadedCorporations = sortedCorporations.filter(
+      (c) => !getUlbStats(c).hasUploaded,
+    );
+
+    const corpUploadedCount = uploadedCorporations.length;
+    const corpNotUploadedCount = notUploadedCorporations.length;
+
+    // Row 4: Summary Abstract Row for 24 Corporations
+    const notUploadedCorpText =
+      notUploadedCorporations.length === 0
+        ? '-'
+        : notUploadedCorporations
+            .map((c, i) => `${i + 1}.${c.name}`)
+            .join('\n');
+
+    const summaryRow = wsCorpAbstract.addRow([
+      1,
+      '24 Corporations (Statewide Abstract)',
+      sortedCorporations.length,
+      corpUploadedCount,
+      corpNotUploadedCount,
+      notUploadedCorpText,
+    ]);
+
+    const summaryLineCount =
+      notUploadedCorporations.length > 0 ? notUploadedCorporations.length : 1;
+    summaryRow.height = Math.max(28, summaryLineCount * 18 + 8);
+
+    summaryRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    summaryRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+    summaryRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+    summaryRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+    summaryRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+    summaryRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+
+    summaryRow.eachCell((cell) => {
+      cell.font = { name: 'Arial', size: 10, bold: true };
+    });
+
+    // Rows 5 - 28: Individual 24 Corporation Breakdown Rows
+    let cIdx = 1;
     for (const corp of sortedCorporations) {
       const stats = getUlbStats(corp);
-      const totalCatCount = categories.length;
-
-      const uploadedCats = categories.filter((c) => {
-        const s = stats.catMap.get(c.category_id)?.status;
-        return s === SubmissionStatus.ON_TIME || s === SubmissionStatus.LATE;
-      });
-
-      const notUploadedCats = categories.filter((c) => {
-        const s = stats.catMap.get(c.category_id)?.status;
-        return s !== SubmissionStatus.ON_TIME && s !== SubmissionStatus.LATE;
-      });
-
-      const uploadedCount = uploadedCats.length;
-      const notUploadedCount = notUploadedCats.length;
-
-      totalCorpCategoriesCount += totalCatCount;
-      totalCorpUploadedCatCount += uploadedCount;
-      totalCorpNotUploadedCatCount += notUploadedCount;
-
-      const notUploadedText =
-        notUploadedCats.length === 0
-          ? '-'
-          : notUploadedCats.map((cat, i) => `${i + 1}.${cat.name}`).join('\n');
+      const isUploaded = stats.hasUploaded;
+      const unsubmittedText = isUploaded ? '-' : `1.${corp.name}`;
 
       const dataRow = wsCorpAbstract.addRow([
         cIdx++,
         corp.name,
-        totalCatCount,
-        uploadedCount,
-        notUploadedCount,
-        notUploadedText,
+        1,
+        isUploaded ? 1 : 0,
+        isUploaded ? 0 : 1,
+        unsubmittedText,
       ]);
 
-      const lineCount = notUploadedCats.length > 0 ? notUploadedCats.length : 1;
-      dataRow.height = Math.max(24, lineCount * 18 + 8);
+      dataRow.height = 24;
 
       dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
       dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
       dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
       dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
       dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-      dataRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+      dataRow.getCell(6).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
 
       dataRow.eachCell((cell) => {
         cell.font = { name: 'Arial', size: 10 };
       });
     }
 
-    // Row 28: Total Row for Corporations
+    // Row 29: Total Row for Corporations
     const corpTotalRow = wsCorpAbstract.addRow([
       '',
       'Total',
-      totalCorpCategoriesCount,
-      totalCorpUploadedCatCount,
-      totalCorpNotUploadedCatCount,
+      sortedCorporations.length,
+      corpUploadedCount,
+      corpNotUploadedCount,
       '',
     ]);
     corpTotalRow.height = 26;
@@ -472,7 +488,7 @@ export class ReportsService {
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
     });
 
-    // Apply borders to all cells A1:F28
+    // Apply borders to all cells in wsCorpAbstract
     for (let r = 1; r <= wsCorpAbstract.rowCount; r++) {
       const row = wsCorpAbstract.getRow(r);
       for (let c = 1; c <= 6; c++) {
@@ -483,11 +499,11 @@ export class ReportsService {
 
     wsCorpAbstract.columns = [
       { width: 8 },  // S.No
-      { width: 28 }, // Corporation Name
-      { width: 14 }, // No of Categories
-      { width: 20 }, // No of Categories uploaded
-      { width: 20 }, // No of Categories not uploaded
-      { width: 36 }, // Not Uploaded Categories
+      { width: 34 }, // Corporation
+      { width: 12 }, // No of ULBs
+      { width: 18 }, // No of ULBs uploaded the photos
+      { width: 18 }, // No of ULBs not uploaded the photos
+      { width: 36 }, // Not Uploaded ULBs
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
