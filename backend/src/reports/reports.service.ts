@@ -339,16 +339,15 @@ export class ReportsService {
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SHEET 2: Corporation Abstract (STRICT UPLOADED & NOT UPLOADED ABSTRACT)
+    // SHEET 2: Corporation Abstract (EXACT MATCH TO USER REFERENCE IMAGE)
     // ──────────────────────────────────────────────────────────────────────────
     const wsCorpAbstract = wb.addWorksheet('Corporation Abstract');
     wsCorpAbstract.views = [{ showGridLines: true }];
 
     // Row 1: Merged Title
-    wsCorpAbstract.mergeCells('A1:F1');
+    wsCorpAbstract.mergeCells('A1:D1');
     const corpTitleCell = wsCorpAbstract.getCell('A1');
-    corpTitleCell.value =
-      'Corporation Abstract - Municipal Corporations Morning Inspection Status';
+    corpTitleCell.value = 'Corporation Commissioners Morning Inspection Status';
     corpTitleCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFCC0000' } };
     corpTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     wsCorpAbstract.getRow(1).height = 28;
@@ -367,101 +366,151 @@ export class ReportsService {
     corpCellB2.font = { name: 'Arial', size: 11, bold: true };
     corpCellB2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    wsCorpAbstract.mergeCells('C2:D2');
     const corpCellC2 = wsCorpAbstract.getCell('C2');
     corpCellC2.value = 'Time of Verification';
     corpCellC2.font = { name: 'Arial', size: 11, bold: true };
     corpCellC2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    wsCorpAbstract.mergeCells('E2:F2');
-    const corpCellE2 = wsCorpAbstract.getCell('E2');
-    corpCellE2.value = '5.45 Am to 7.30 Am';
-    corpCellE2.font = { name: 'Arial', size: 11, bold: true };
-    corpCellE2.alignment = { horizontal: 'center', vertical: 'middle' };
+    const corpCellD2 = wsCorpAbstract.getCell('D2');
+    corpCellD2.value = '5.45 am to 7.30 am';
+    corpCellD2.font = { name: 'Arial', size: 11, bold: true };
+    corpCellD2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Row 3: Headers (EXACT MATCH TO MUNICIPALITIES PDF REFERENCE)
+    // Row 3: Headers (4 Columns)
     const corpHeaders = [
       'S.No',
-      'Corporation',
-      'No of\nULBs',
-      'No of ULBs\nuploaded\nthe photos',
-      'No of ULBs\nnot uploaded\nthe photos',
-      'Not Uploaded ULBs',
+      'Corporations',
+      'ULB uploaded the\nphotos',
+      'ULBs not uploaded\nthe photos',
     ];
     const corpHeaderRow = wsCorpAbstract.addRow(corpHeaders);
-    corpHeaderRow.height = 40;
+    corpHeaderRow.height = 38;
     corpHeaderRow.eachCell((cell) => {
       cell.font = { name: 'Arial', size: 10, bold: true };
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     });
 
-    const sortedCorporations = [...corporations].sort((a, b) =>
-      a.name.localeCompare(b.name),
-    );
+    // Fills for Corporation Status Cells matching reference image
+    const photoUploadedFill: ExcelJS.Fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFC6EFCE' }, // Soft green matching reference image
+    };
 
-    const uploadedCorporations = sortedCorporations.filter(
-      (c) => getUlbStats(c).hasUploaded,
-    );
-    const notUploadedCorporations = sortedCorporations.filter(
-      (c) => !getUlbStats(c).hasUploaded,
-    );
+    const photoNotUploadedFill: ExcelJS.Fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFADBD8' }, // Soft peach/pink matching reference image
+    };
 
-    const corpUploadedCount = uploadedCorporations.length;
-    const corpNotUploadedCount = notUploadedCorporations.length;
+    // Canonical order matching reference screenshot
+    const OFFICIAL_CORP_ORDER = [
+      'Madurai',
+      'Coimbatore',
+      'Salem',
+      'Tiruchirapalli',
+      'Tirunelveli',
+      'Tiruppur',
+      'Erode',
+      'Vellore',
+      'Thoothukudi',
+      'Thanjavur',
+      'Dindigul',
+      'Nagercoil',
+      'Hosur',
+      'Avadi',
+      'Karur',
+      'Cuddalore',
+      'Kancheepuram',
+      'Tambaram',
+      'Sivakasi',
+      'Kumbakonam',
+      'Tiruvannamalai',
+      'Namakkal',
+      'Karaikudi',
+      'Pudukkottai',
+    ];
 
-    // Row 4: Summary Abstract Row for 24 Corporations
-    const notUploadedCorpText =
-      notUploadedCorporations.length === 0
-        ? '-'
-        : notUploadedCorporations
-            .map((c, i) => `${i + 1}.${c.name}`)
-            .join('\n');
+    const sortedCorporationsList: UlbRow[] = [];
+    for (const canonicalName of OFFICIAL_CORP_ORDER) {
+      const found = corporations.find(
+        (c) =>
+          c.name.toLowerCase().includes(canonicalName.toLowerCase()) ||
+          canonicalName.toLowerCase().includes(c.name.toLowerCase()),
+      );
+      if (found && !sortedCorporationsList.includes(found)) {
+        sortedCorporationsList.push(found);
+      }
+    }
+    for (const corp of corporations) {
+      if (!sortedCorporationsList.includes(corp)) {
+        sortedCorporationsList.push(corp);
+      }
+    }
 
-    const summaryRow = wsCorpAbstract.addRow([
-      1,
-      '24 Corporations',
-      sortedCorporations.length,
-      corpUploadedCount,
-      corpNotUploadedCount,
-      notUploadedCorpText,
-    ]);
+    let corpUploadedTotal = 0;
+    let corpNotUploadedTotal = 0;
+    let cSNo = 1;
 
-    const summaryLineCount =
-      notUploadedCorporations.length > 0 ? notUploadedCorporations.length : 1;
-    summaryRow.height = Math.max(28, summaryLineCount * 18 + 8);
+    for (const corp of sortedCorporationsList) {
+      const stats = getUlbStats(corp);
+      const isUploaded = stats.hasUploaded;
 
-    summaryRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
-    summaryRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-    summaryRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+      if (isUploaded) corpUploadedTotal++;
+      else corpNotUploadedTotal++;
 
-    summaryRow.eachCell((cell) => {
-      cell.font = { name: 'Arial', size: 10 };
-    });
+      const cleanName = corp.name.replace(/\s*Corporation\s*/i, '').trim();
 
-    // Row 5: Total Row for Corporations
+      const dataRow = wsCorpAbstract.addRow([
+        cSNo++,
+        cleanName,
+        isUploaded ? 'Photo uploaded' : '',
+        isUploaded ? '' : 'Photo not updated',
+      ]);
+      dataRow.height = 24;
+
+      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      dataRow.getCell(1).font = { name: 'Arial', size: 10 };
+      dataRow.getCell(2).font = { name: 'Arial', size: 10 };
+
+      const cellUploaded = dataRow.getCell(3);
+      const cellNotUploaded = dataRow.getCell(4);
+
+      if (isUploaded) {
+        cellUploaded.fill = photoUploadedFill;
+        cellUploaded.font = { name: 'Arial', size: 10 };
+      } else {
+        cellNotUploaded.fill = photoNotUploadedFill;
+        cellNotUploaded.font = { name: 'Arial', size: 10 };
+      }
+    }
+
+    // Row 28: Total Row
     const corpTotalRow = wsCorpAbstract.addRow([
       '',
       'Total',
-      sortedCorporations.length,
-      corpUploadedCount,
-      corpNotUploadedCount,
-      '',
+      corpUploadedTotal,
+      corpNotUploadedTotal,
     ]);
     corpTotalRow.height = 26;
 
-    corpTotalRow.eachCell({ includeEmpty: true }, (cell) => {
-      cell.fill = totalFill;
-      cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFCC0000' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    });
+    corpTotalRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+    corpTotalRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+    corpTotalRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+    corpTotalRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // Apply borders to all cells in wsCorpAbstract
+    corpTotalRow.getCell(2).font = { name: 'Arial', size: 11, bold: true };
+    corpTotalRow.getCell(3).font = { name: 'Arial', size: 11, bold: true };
+    corpTotalRow.getCell(4).font = { name: 'Arial', size: 11, bold: true };
+
+    // Apply thin borders to all cells A1:D28
     for (let r = 1; r <= wsCorpAbstract.rowCount; r++) {
       const row = wsCorpAbstract.getRow(r);
-      for (let c = 1; c <= 6; c++) {
+      for (let c = 1; c <= 4; c++) {
         const cell = row.getCell(c);
         cell.border = thinBorder;
       }
@@ -469,11 +518,9 @@ export class ReportsService {
 
     wsCorpAbstract.columns = [
       { width: 8 },  // S.No
-      { width: 34 }, // Corporation
-      { width: 12 }, // No of ULBs
-      { width: 18 }, // No of ULBs uploaded the photos
-      { width: 18 }, // No of ULBs not uploaded the photos
-      { width: 36 }, // Not Uploaded ULBs
+      { width: 24 }, // Corporations
+      { width: 26 }, // ULB uploaded the photos
+      { width: 26 }, // ULBs not uploaded the photos
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
