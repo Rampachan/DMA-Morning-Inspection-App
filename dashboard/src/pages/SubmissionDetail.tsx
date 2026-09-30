@@ -207,13 +207,13 @@ export default function SubmissionDetail() {
             />
             <MetaRow
               label="Submitted at"
-              value={format(new Date(submission.submittedAt), 'dd MMM yyyy, HH:mm:ss')}
+              value={format(new Date(submission.submittedAt), 'dd-MM-yyyy HH:mm:ss')}
             />
             <MetaRow
               label="Device timestamp"
               value={format(
                 new Date(submission.deviceTimestamp),
-                'dd MMM yyyy, HH:mm:ss',
+                'dd-MM-yyyy HH:mm:ss',
               )}
             />
             <MetaRow label="Status" value={<StatusBadge status={submission.status} />} />

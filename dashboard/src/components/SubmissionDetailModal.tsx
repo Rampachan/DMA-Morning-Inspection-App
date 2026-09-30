@@ -215,7 +215,7 @@ export default function SubmissionDetailModal({
                 <div className="text-right text-xs text-gray-500">
                   <span>Device Timestamp: </span>
                   <strong className="text-gray-700">
-                    {format(new Date(activeSubmission.device_timestamp || activeSubmission.deviceTimestamp), 'dd MMM yyyy, hh:mm a')}
+                    {format(new Date(activeSubmission.device_timestamp || activeSubmission.deviceTimestamp), 'dd-MM-yyyy, hh:mm a')}
                   </strong>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { downloadDailyReport, downloadMonthlyReport } from '../api/reports';
+import { formatDateDDMMYYYY } from '../utils/dateUtils';
 import Layout from '../components/Layout';
 
 type ToastState = { type: 'success' | 'error'; message: string } | null;
@@ -44,7 +45,7 @@ export default function ReportsPage() {
       await downloadDailyReport(dailyDate);
       showToast(setDailyToast, {
         type: 'success',
-        message: `Daily report for ${dailyDate} downloaded successfully.`,
+        message: `Daily report for ${formatDateDDMMYYYY(dailyDate)} downloaded successfully.`,
       });
     } catch {
       showToast(setDailyToast, {

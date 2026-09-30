@@ -180,11 +180,11 @@ export class ReportsService {
       right: { style: 'thin', color: { argb: 'FF000000' } },
     };
 
-    // Format date string YYYY-MM-DD -> DD.MM.YYYY
+    // Format date string YYYY-MM-DD -> DD-MM-YYYY
     const dateParts = date.split('-');
     const formattedDate =
       dateParts.length === 3
-        ? `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`
+        ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
         : date;
 
     // ──────────────────────────────────────────────────────────────────────────

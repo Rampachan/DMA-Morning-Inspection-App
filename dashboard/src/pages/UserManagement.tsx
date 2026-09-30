@@ -273,7 +273,7 @@ export default function UserManagement() {
                         </td>
                         <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
                           {user.lastLoginAt || user.last_login_at
-                            ? format(new Date(user.lastLoginAt || user.last_login_at!), 'dd MMM yyyy HH:mm')
+                            ? format(new Date(user.lastLoginAt || user.last_login_at!), 'dd-MM-yyyy HH:mm')
                             : <span className="text-gray-400 italic">Never</span>}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
