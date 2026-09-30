@@ -339,7 +339,7 @@ export class ReportsService {
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SHEET 2: Corporation Abstract (EXACT MATCH TO PDF LAYOUT FOR 24 CORPORATIONS)
+    // SHEET 2: Corporation Abstract (STRICT UPLOADED & NOT UPLOADED ABSTRACT)
     // ──────────────────────────────────────────────────────────────────────────
     const wsCorpAbstract = wb.addWorksheet('Corporation Abstract');
     wsCorpAbstract.views = [{ showGridLines: true }];
@@ -419,7 +419,7 @@ export class ReportsService {
 
     const summaryRow = wsCorpAbstract.addRow([
       1,
-      '24 Corporations (Statewide Abstract)',
+      '24 Corporations',
       sortedCorporations.length,
       corpUploadedCount,
       corpNotUploadedCount,
@@ -438,40 +438,10 @@ export class ReportsService {
     summaryRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
 
     summaryRow.eachCell((cell) => {
-      cell.font = { name: 'Arial', size: 10, bold: true };
+      cell.font = { name: 'Arial', size: 10 };
     });
 
-    // Rows 5 - 28: Individual 24 Corporation Breakdown Rows
-    let cIdx = 1;
-    for (const corp of sortedCorporations) {
-      const stats = getUlbStats(corp);
-      const isUploaded = stats.hasUploaded;
-      const unsubmittedText = isUploaded ? '-' : `1.${corp.name}`;
-
-      const dataRow = wsCorpAbstract.addRow([
-        cIdx++,
-        corp.name,
-        1,
-        isUploaded ? 1 : 0,
-        isUploaded ? 0 : 1,
-        unsubmittedText,
-      ]);
-
-      dataRow.height = 24;
-
-      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-      dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
-      dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-      dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-      dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-      dataRow.getCell(6).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
-
-      dataRow.eachCell((cell) => {
-        cell.font = { name: 'Arial', size: 10 };
-      });
-    }
-
-    // Row 29: Total Row for Corporations
+    // Row 5: Total Row for Corporations
     const corpTotalRow = wsCorpAbstract.addRow([
       '',
       'Total',
