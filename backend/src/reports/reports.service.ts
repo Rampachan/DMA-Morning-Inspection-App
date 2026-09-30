@@ -339,74 +339,156 @@ export class ReportsService {
     ];
 
     // ──────────────────────────────────────────────────────────────────────────
-    // SHEET 2: 24 Corporations
+    // SHEET 2: Corporation Abstract (EXACT MATCH TO PDF LAYOUT FOR 24 CORPORATIONS)
     // ──────────────────────────────────────────────────────────────────────────
-    const wsCorp = wb.addWorksheet('24 Corporations');
-    wsCorp.views = [{ showGridLines: true }];
+    const wsCorpAbstract = wb.addWorksheet('Corporation Abstract');
+    wsCorpAbstract.views = [{ showGridLines: true }];
 
-    const corpTitle = wsCorp.addRow([
-      `24 CORPORATIONS — DAILY COMPLIANCE STATUS (${formattedDate})`,
-    ]);
-    corpTitle.font = { bold: true, size: 13, color: { argb: 'FF1F4E79' } };
-    wsCorp.mergeCells(`A1:${String.fromCharCode(65 + 5 + categories.length)}1`);
-    wsCorp.addRow([]);
+    // Row 1: Merged Title
+    wsCorpAbstract.mergeCells('A1:F1');
+    const corpTitleCell = wsCorpAbstract.getCell('A1');
+    corpTitleCell.value =
+      'Corporation Abstract - Municipal Corporations Morning Inspection Status';
+    corpTitleCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFCC0000' } };
+    corpTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    wsCorpAbstract.getRow(1).height = 28;
 
+    // Row 2: Date & Time of Verification info
+    const corpRow2 = wsCorpAbstract.getRow(2);
+    corpRow2.height = 24;
+
+    const corpCellA2 = wsCorpAbstract.getCell('A2');
+    corpCellA2.value = 'Date';
+    corpCellA2.font = { name: 'Arial', size: 11, bold: true };
+    corpCellA2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    const corpCellB2 = wsCorpAbstract.getCell('B2');
+    corpCellB2.value = formattedDate;
+    corpCellB2.font = { name: 'Arial', size: 11, bold: true };
+    corpCellB2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    wsCorpAbstract.mergeCells('C2:D2');
+    const corpCellC2 = wsCorpAbstract.getCell('C2');
+    corpCellC2.value = 'Time of Verification';
+    corpCellC2.font = { name: 'Arial', size: 11, bold: true };
+    corpCellC2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    wsCorpAbstract.mergeCells('E2:F2');
+    const corpCellE2 = wsCorpAbstract.getCell('E2');
+    corpCellE2.value = '5.45 Am to 7.30 Am';
+    corpCellE2.font = { name: 'Arial', size: 11, bold: true };
+    corpCellE2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // Row 3: Headers
     const corpHeaders = [
       'S.No',
       'Corporation Name',
-      'District',
-      'Upload Status',
-      'Uploaded?',
-      ...categories.map((c) => c.name),
-      'Latest Submission Time',
-      'Compliance %',
+      'No of\nCategories',
+      'No of Categories\nuploaded\nthe photos',
+      'No of Categories\nnot uploaded\nthe photos',
+      'Not Uploaded Categories',
     ];
-    wsCorp.addRow(corpHeaders);
-    const corpHeaderRow = wsCorp.getRow(3);
-    corpHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    corpHeaderRow.fill = HEADER_FILL;
+    const corpHeaderRow = wsCorpAbstract.addRow(corpHeaders);
+    corpHeaderRow.height = 40;
+    corpHeaderRow.eachCell((cell) => {
+      cell.font = { name: 'Arial', size: 10, bold: true };
+      cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    });
 
-    let corpIdx = 1;
-    for (const corp of corporations) {
+    // Rows 4 - 27: 24 Corporations Data
+    let totalCorpCategoriesCount = 0;
+    let totalCorpUploadedCatCount = 0;
+    let totalCorpNotUploadedCatCount = 0;
+    let cIdx = 1;
+
+    const sortedCorporations = [...corporations].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+
+    for (const corp of sortedCorporations) {
       const stats = getUlbStats(corp);
-      const catCells = categories.map((c) => {
+      const totalCatCount = categories.length;
+
+      const uploadedCats = categories.filter((c) => {
         const s = stats.catMap.get(c.category_id)?.status;
-        if (!s) return 'Pending';
-        if (s === SubmissionStatus.ON_TIME) return 'On-Time';
-        if (s === SubmissionStatus.LATE) return 'Late';
-        return 'Absent';
+        return s === SubmissionStatus.ON_TIME || s === SubmissionStatus.LATE;
       });
 
-      const rowValues = [
-        corpIdx++,
-        corp.name,
-        corp.district,
-        stats.uploadStatus,
-        stats.hasUploaded ? 'YES' : 'NO',
-        ...catCells,
-        stats.latestTime,
-        `${stats.compliancePct}%`,
-      ];
-      wsCorp.addRow(rowValues);
-      const row = wsCorp.getRow(wsCorp.rowCount);
-
-      const uploadedCell = row.getCell(5);
-      uploadedCell.fill = stats.hasUploaded ? YES_FILL : NO_FILL;
-      uploadedCell.font = { bold: true };
-
-      categories.forEach((c, i) => {
+      const notUploadedCats = categories.filter((c) => {
         const s = stats.catMap.get(c.category_id)?.status;
-        if (s && STATUS_FILL[s]) {
-          row.getCell(6 + i).fill = STATUS_FILL[s];
-        }
+        return s !== SubmissionStatus.ON_TIME && s !== SubmissionStatus.LATE;
+      });
+
+      const uploadedCount = uploadedCats.length;
+      const notUploadedCount = notUploadedCats.length;
+
+      totalCorpCategoriesCount += totalCatCount;
+      totalCorpUploadedCatCount += uploadedCount;
+      totalCorpNotUploadedCatCount += notUploadedCount;
+
+      const notUploadedText =
+        notUploadedCats.length === 0
+          ? '-'
+          : notUploadedCats.map((cat, i) => `${i + 1}.${cat.name}`).join('\n');
+
+      const dataRow = wsCorpAbstract.addRow([
+        cIdx++,
+        corp.name,
+        totalCatCount,
+        uploadedCount,
+        notUploadedCount,
+        notUploadedText,
+      ]);
+
+      const lineCount = notUploadedCats.length > 0 ? notUploadedCats.length : 1;
+      dataRow.height = Math.max(24, lineCount * 18 + 8);
+
+      dataRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+      dataRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+      dataRow.getCell(6).alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+
+      dataRow.eachCell((cell) => {
+        cell.font = { name: 'Arial', size: 10 };
       });
     }
 
-    wsCorp.columns.forEach((col) => {
-      col.width = 18;
+    // Row 28: Total Row for Corporations
+    const corpTotalRow = wsCorpAbstract.addRow([
+      '',
+      'Total',
+      totalCorpCategoriesCount,
+      totalCorpUploadedCatCount,
+      totalCorpNotUploadedCatCount,
+      '',
+    ]);
+    corpTotalRow.height = 26;
+
+    corpTotalRow.eachCell({ includeEmpty: true }, (cell) => {
+      cell.fill = totalFill;
+      cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFCC0000' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
     });
-    wsCorp.getColumn(1).width = 8;
-    wsCorp.getColumn(2).width = 24;
+
+    // Apply borders to all cells A1:F28
+    for (let r = 1; r <= wsCorpAbstract.rowCount; r++) {
+      const row = wsCorpAbstract.getRow(r);
+      for (let c = 1; c <= 6; c++) {
+        const cell = row.getCell(c);
+        cell.border = thinBorder;
+      }
+    }
+
+    wsCorpAbstract.columns = [
+      { width: 8 },  // S.No
+      { width: 28 }, // Corporation Name
+      { width: 14 }, // No of Categories
+      { width: 20 }, // No of Categories uploaded
+      { width: 20 }, // No of Categories not uploaded
+      { width: 36 }, // Not Uploaded Categories
+    ];
 
     // ──────────────────────────────────────────────────────────────────────────
     // SHEET 3: Detailed Municipality Status
